@@ -1,0 +1,98 @@
+# mabi: 上流（open-webui/open-webui）のリリースを mabi ブランチに取り込む PR を作る（ADR 0035。週 1 と手動）。
+# - 最新のリリースのタグ（vX.Y.Z。rc などは除く）が mabi にまだ入っていなければ、sync/<タグ> ブランチで merge する
+# - 衝突したら、衝突したファイルの一覧を題に書いた issue を作って止まる（人が直す）
+# - 衝突が無ければ PR を作り、同じ実行の中でイメージのビルドを試して結果を PR にコメントする
+#   （GITHUB_TOKEN で作った PR では pull_request の workflow が動かないため）
+# - マージは人が行う。マージすると mabi-image が新しいイメージを作り、Mabi 側で digest を上げる（W4）
+name: mabi-sync
+
+on:
+  schedule:
+    - cron: '17 18 * * 0' # 毎週月曜 03:17（日本時間）
+  workflow_dispatch:
+
+concurrency:
+  group: mabi-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      branch: ${{ steps.merge.outputs.branch }}
+      pr: ${{ steps.merge.outputs.pr }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: mabi
+          fetch-depth: 0
+      - name: 上流のタグを取り、取り込むものを決めて merge する
+        id: merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --no-tags https://github.com/open-webui/open-webui.git '+refs/tags/v*:refs/tags/upstream/v*'
+          tag=$(git tag -l 'upstream/v*' | sed 's#^upstream/##' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          if [ -z "$tag" ]; then echo "上流のタグが無い"; exit 1; fi
+          if git merge-base --is-ancestor "upstream/$tag" HEAD; then
+            echo "取り込み済み: $tag"
+            exit 0
+          fi
+          branch="sync/$tag"
+          if git ls-remote --exit-code origin "refs/heads/$branch" >/dev/null; then
+            echo "取り込みのブランチが既にある: $branch"
+            exit 0
+          fi
+          git switch -c "$branch"
+          if ! git merge --no-ff --no-edit -m "上流の $tag を取り込む" "upstream/$tag"; then
+            files=$(git diff --name-only --diff-filter=U | head -50)
+            git merge --abort
+            gh issue create --title "上流の $tag の取り込みで衝突" \
+              --body "$(printf '衝突したファイル:\n\n```\n%s\n```\n\nmabi ブランチで手で merge してください（mabi-sync）。' "$files")"
+            exit 0
+          fi
+          git push origin "$branch"
+          pr=$(gh pr create --base mabi --head "$branch" --title "上流の $tag を取り込む" \
+            --body "mabi-sync が作った PR。イメージのビルドの結果はこの PR のコメントに書く。マージは人が行う。")
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "pr=$pr" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: sync
+    if: needs.sync.outputs.branch != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.sync.outputs.branch }}
+      - uses: docker/setup-buildx-action@v4
+      - name: ビルドを試す（push しない）
+        id: build
+        continue-on-error: true
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          cache-from: type=gha
+      - name: 結果を PR に書く
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ needs.sync.outputs.pr }}
+          OUTCOME: ${{ steps.build.outcome }}
+        run: |
+          if [ "$OUTCOME" = "success" ]; then msg="イメージのビルド: 成功"; else msg="＊イメージのビルド: 失敗（実行の記録を確認してください）"; fi
+          gh pr comment "$PR" --body "$msg（${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}）"

@@ -57,6 +57,8 @@
 
 	import '../tailwind.css';
 	import '../app.css';
+	// mabi: デジタル庁デザインシステムへの置き換え（ADR 0035）
+	import '$lib/mabi/dads.css';
 	import 'tippy.js/dist/tippy.css';
 
 	import { executeToolServer, getBackendConfig, getModels, getVersion } from '$lib/apis';

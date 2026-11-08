@@ -1,0 +1,246 @@
+/* mabi の画面の部品（デジタル庁デザインシステムの Table・Card・NotificationBanner・Tab・ChipLabel に合わせた最小限） */
+
+.mabi {
+	color: var(--dads-text-body);
+	background: var(--dads-bg-page);
+	font-size: 16px;
+	line-height: 1.7;
+	max-width: 1120px;
+	margin: 0 auto;
+	padding: 24px 40px 64px;
+}
+
+.mabi h1 {
+	color: var(--dads-text-heading);
+	font-size: 32px;
+	font-weight: 700;
+	line-height: 1.5;
+	letter-spacing: 0.01em;
+	margin: 0 0 16px;
+}
+
+.mabi h2 {
+	color: var(--dads-text-heading);
+	font-size: 24px;
+	font-weight: 700;
+	line-height: 1.5;
+	margin: 40px 0 16px;
+}
+
+.mabi h3 {
+	color: var(--dads-text-heading);
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 1.5;
+	margin: 24px 0 8px;
+}
+
+.mabi p.support {
+	color: var(--dads-text-secondary);
+	margin: 0 0 8px;
+}
+
+.mabi a {
+	color: var(--dads-link);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.mabi a:hover {
+	color: var(--dads-link-hover);
+	text-decoration-thickness: 3px;
+}
+.mabi a:visited {
+	color: var(--dads-link-visited);
+}
+
+/* タブ（DADS Tab） */
+.mabi-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0;
+	border-bottom: 1px solid var(--dads-border-divider);
+	margin-bottom: 24px;
+}
+.mabi-tabs button {
+	min-height: 44px;
+	padding: 8px 16px;
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--dads-text-secondary);
+	background: none;
+	border: none;
+	border-bottom: 4px solid transparent;
+	margin-bottom: -1px;
+}
+.mabi-tabs button[aria-selected='true'] {
+	color: var(--dads-key-900);
+	border-bottom-color: var(--dads-key-900);
+}
+.mabi-tabs button:hover {
+	background: var(--dads-key-50);
+}
+
+/* 数値のカード（DADS Card の数値版） */
+.mabi-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 16px;
+}
+.mabi-card {
+	border: 1px solid var(--dads-border-divider);
+	border-radius: var(--dads-radius-16);
+	padding: 16px 24px;
+	background: var(--dads-bg-page);
+}
+.mabi-card .label {
+	color: var(--dads-text-secondary);
+	font-size: 16px;
+}
+.mabi-card .value {
+	color: var(--dads-text-heading);
+	font-size: 32px;
+	font-weight: 700;
+	line-height: 1.5;
+}
+.mabi-card .note {
+	color: var(--dads-text-secondary);
+	font-size: 14px;
+}
+
+/* 表（DADS Table の dense） */
+.mabi-table-scroll {
+	overflow-x: auto;
+}
+.mabi-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 16px;
+	line-height: 1.3;
+}
+.mabi-table th,
+.mabi-table td {
+	text-align: left;
+	vertical-align: top;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--dads-border-divider);
+}
+.mabi-table th {
+	background: var(--dads-bg-muted);
+	color: var(--dads-text-heading);
+	font-weight: 700;
+}
+.mabi-table tbody tr:hover {
+	background: var(--dads-key-50);
+}
+.mabi-table td.num {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+/* 状態の印（色だけでなく文字とアイコンで伝える） */
+.mabi-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	border: 1px solid currentColor;
+	border-radius: 9999px;
+	padding: 0 8px;
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1.6;
+	white-space: nowrap;
+}
+.mabi-chip.ok {
+	color: var(--dads-success-2);
+}
+.mabi-chip.ng {
+	color: var(--dads-error-2);
+}
+.mabi-chip.warn {
+	color: var(--dads-warning-orange-2);
+}
+.mabi-chip.info {
+	color: var(--dads-key-900);
+}
+.mabi-chip.muted {
+	color: var(--dads-text-secondary);
+}
+
+/* 通知のバナー（DADS NotificationBanner） */
+.mabi-banner {
+	border: 2px solid currentColor;
+	border-radius: var(--dads-radius-12);
+	padding: 12px 16px;
+	margin: 8px 0 16px;
+	color: var(--dads-text-body);
+}
+.mabi-banner.error {
+	border-color: var(--dads-error-1);
+}
+.mabi-banner.info {
+	border-color: var(--dads-key-900);
+}
+.mabi-banner strong {
+	display: block;
+}
+
+/* 1 日の時間の帯（予定と実績） */
+.mabi-day {
+	display: grid;
+	grid-template-columns: 7.5em 1fr;
+	align-items: center;
+	gap: 8px;
+	margin: 4px 0;
+}
+.mabi-track {
+	position: relative;
+	height: 28px;
+	background: var(--dads-bg-subtle);
+	border: 1px solid var(--dads-border-divider);
+	border-radius: 4px;
+	overflow: hidden;
+}
+.mabi-track .block {
+	position: absolute;
+	top: 2px;
+	bottom: 2px;
+	min-width: 3px;
+	border-radius: 2px;
+	border: 1px solid var(--dads-text-heading);
+}
+.mabi-track .hour {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	background: var(--dads-border-divider);
+	opacity: 0.6;
+}
+.mabi-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 16px;
+	margin: 8px 0;
+}
+.mabi-legend span {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+.mabi-swatch {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	border: 1px solid var(--dads-text-heading);
+	border-radius: 2px;
+}
+
+.mabi-pre {
+	white-space: pre-wrap;
+	background: var(--dads-bg-subtle);
+	border: 1px solid var(--dads-border-divider);
+	border-radius: var(--dads-radius-8);
+	padding: 12px 16px;
+	font-family: var(--font-mono);
+	font-size: 14px;
+}

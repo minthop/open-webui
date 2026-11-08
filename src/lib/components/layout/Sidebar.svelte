@@ -100,6 +100,7 @@
 	import CalendarIcon from './Sidebar/icons/Calendar.svelte';
 	import ClockIcon from './Sidebar/icons/Clock.svelte';
 	import CodeIcon from './Sidebar/icons/Code.svelte';
+	import ServerIcon from '../icons/Server.svelte'; // mabi
 	import EditPencilIcon from './Sidebar/icons/EditPencil.svelte';
 	import NotesIcon from './Sidebar/icons/Notes.svelte';
 	import SearchIcon from './Sidebar/icons/Search.svelte';
@@ -278,7 +279,11 @@
 		folderRegistry[folder.id]?.setFolderItems?.();
 	};
 
-	$: pinnedItems = $settings?.pinnedMenuItems ?? DEFAULT_PINNED_ITEMS;
+	// mabi: サーバーの画面は常に先頭に出す
+	$: pinnedItems = [
+		'mabi',
+		...($settings?.pinnedMenuItems ?? DEFAULT_PINNED_ITEMS).filter((i) => i !== 'mabi')
+	];
 
 	$: isMenuItemVisible = (id) => {
 		switch (id) {
@@ -308,6 +313,8 @@
 				);
 			case 'playground':
 				return $user?.role === 'admin';
+			case 'mabi':
+				return !!$user;
 			default:
 				return false;
 		}
@@ -319,7 +326,8 @@
 			workspace: { label: $i18n.t('Workspace'), href: '/workspace', iconType: 'workspace' },
 			automations: { label: $i18n.t('Automations'), href: '/automations', iconType: 'automations' },
 			calendar: { label: $i18n.t('Calendar'), href: '/calendar', iconType: 'calendar' },
-			playground: { label: $i18n.t('Playground'), href: '/playground', iconType: 'playground' }
+			playground: { label: $i18n.t('Playground'), href: '/playground', iconType: 'playground' },
+			mabi: { label: 'サーバー', href: '/mabi', iconType: 'mabi' }
 		};
 		return items[id];
 	};
@@ -329,7 +337,8 @@
 		workspace: '/workspace',
 		calendar: '/calendar',
 		automations: '/automations',
-		playground: '/playground'
+		playground: '/playground',
+		mabi: '/mabi'
 	};
 
 	const getActiveMenuItemId = (pathname) => {
@@ -1227,6 +1236,8 @@
 												<CalendarIcon className="size-4" strokeWidth="1.5" />
 											{:else if itemId === 'playground'}
 												<CodeIcon className="size-4" strokeWidth="1.5" />
+											{:else if itemId === 'mabi'}
+												<ServerIcon className="size-4" strokeWidth="1.5" />
 											{/if}
 										</div>
 									</a>
@@ -1472,6 +1483,8 @@
 													<CalendarIcon className="size-4" strokeWidth="1.5" />
 												{:else if itemId === 'playground'}
 													<CodeIcon className="size-4" strokeWidth="1.5" />
+												{:else if itemId === 'mabi'}
+													<ServerIcon className="size-4" strokeWidth="1.5" />
 												{/if}
 											</div>
 
