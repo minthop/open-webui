@@ -1,0 +1,56 @@
+# mabi: フォーク（minthop/open-webui）の Open WebUI のイメージを作る（ADR 0035。上流の docker.yaml は main・dev・タグで動くので、
+# mabi のブランチでは動かない）。mabi ブランチへの push で ghcr.io/minthop/open-webui:mabi-<sha> と :mabi を作り、digest を
+# 実行の要約に書く。Mabi 側はその digest で固定する（W4）。PR ではビルドだけ（push しない）
+name: mabi-image
+
+on:
+  push:
+    branches: [mabi]
+  pull_request:
+    branches: [mabi]
+  workflow_dispatch:
+
+concurrency:
+  group: mabi-image-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: ghcr にログイン（push のときだけ）
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: ビルド（amd64 だけ。mabi は x86_64）
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/open-webui:mabi-${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/open-webui:mabi
+          build-args: |
+            BUILD_HASH=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: digest を書く
+        if: github.event_name != 'pull_request'
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          echo "### イメージ" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`ghcr.io/${{ github.repository_owner }}/open-webui@${DIGEST}\`" >> "$GITHUB_STEP_SUMMARY"
