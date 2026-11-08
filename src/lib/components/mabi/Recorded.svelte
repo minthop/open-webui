@@ -2,6 +2,7 @@
 	// mabi: 録画と派生物（変換・CM 抜き・文字起こし・要約・場面・索引。ADR 0035）
 	import { onMount } from 'svelte';
 	import { getJson, epgUrl, fmtDateTime, type Loaded } from '$lib/mabi/api';
+	import Dedupe from './Dedupe.svelte';
 
 	let recorded: Loaded<any[]> | null = null;
 	let query = '';
@@ -19,6 +20,8 @@
 		['index', '索引']
 	];
 </script>
+
+<Dedupe />
 
 <h2>録画と派生物</h2>
 <label for="mabi-rec-q"><strong>番組名で絞り込む</strong></label>
