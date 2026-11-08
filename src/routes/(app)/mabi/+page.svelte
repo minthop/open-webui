@@ -11,6 +11,7 @@
 	import Recorded from '$lib/components/mabi/Recorded.svelte';
 	import Models from '$lib/components/mabi/Models.svelte';
 	import Reports from '$lib/components/mabi/Reports.svelte';
+	import Artifacts from '$lib/components/mabi/Artifacts.svelte';
 	import '$lib/mabi/mabi.css';
 
 	const i18n = getContext<any>('i18n');
@@ -21,6 +22,7 @@
 		{ id: 'tv', label: '番組', component: Tv },
 		{ id: 'recorded', label: '録画と派生物', component: Recorded },
 		{ id: 'models', label: 'モデルの台帳', component: Models },
+		{ id: 'artifacts', label: '成果物', component: Artifacts },
 		{ id: 'reports', label: '報告', component: Reports }
 	];
 	const KEY = 'mabi.tab';
