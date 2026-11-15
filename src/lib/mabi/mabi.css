@@ -227,6 +227,31 @@
 	align-items: center;
 	gap: 6px;
 }
+/* 役割（M0〜M10）の凡例 */
+.mabi-roles {
+	margin: 8px 0 16px;
+}
+.mabi-roles summary {
+	cursor: pointer;
+	font-weight: 700;
+}
+.mabi-roles dl {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+	gap: 4px 24px;
+	margin: 8px 0 0;
+}
+.mabi-roles dl div {
+	display: flex;
+	gap: 8px;
+}
+.mabi-roles dt {
+	font-weight: 700;
+	min-width: 3em;
+}
+.mabi-roles dd {
+	margin: 0;
+}
 .mabi-swatch {
 	display: inline-block;
 	width: 16px;

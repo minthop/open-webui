@@ -16,6 +16,21 @@
 		Reject: ['＊採用しない', 'ng']
 	};
 	const pt = (x: number) => (Math.round(x * 10) / 10).toFixed(1);
+
+	/** 役割の凡例（mabi の計画書 5.3） */
+	const ROLES: [string, string][] = [
+		['M0', 'ルーティング・意図分類（CPU で常駐）'],
+		['M1', '日常の実装（Claude Code の既定）'],
+		['M2', '高速生成・コード補完（FIM）'],
+		['M3', '対話・調査（CrewAI も）'],
+		['M4', 'マルチモーダル（録画の場面の説明）'],
+		['M5', 'レスキュー（難しい問題の立て直し）'],
+		['M6', 'ロジックチェック・数理'],
+		['M7', '長文ログ（256K）'],
+		['M8', 'ツール・MCP'],
+		['M9', '文字起こし（whisper.cpp）'],
+		['M10', '録画の検索の埋め込み（VideoRAG）']
+	];
 </script>
 
 {#if models === null}
@@ -35,6 +50,17 @@
 			? fmtDateTime(d.summaries_generated_at * 1000)
 			: 'まだ'}）
 	</p>
+	<details class="mabi-roles" open>
+		<summary>役割（M0〜M10）の凡例</summary>
+		<dl>
+			{#each ROLES as [k, v]}
+				<div>
+					<dt>{k}</dt>
+					<dd>{v}</dd>
+				</div>
+			{/each}
+		</dl>
+	</details>
 	<div class="mabi-table-scroll">
 		<table class="mabi-table">
 			<thead>
@@ -52,7 +78,7 @@
 				{#each d.roles as r}
 					{@const c = r.current}
 					<tr>
-						<th scope="row">{r.role}</th>
+						<th scope="row" title={ROLES.find(([k]) => k === r.role)?.[1]}>{r.role}</th>
 						<td>
 							{#if c}{c.id}<br /><span class="support">{c.repo}（{c.quant}）</span>{:else}—{/if}
 						</td>

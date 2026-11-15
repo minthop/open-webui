@@ -6,26 +6,45 @@
 	let overview: Loaded<any> | null = null;
 	let now: Loaded<any> | null = null;
 	let queues: Loaded<any[]> | null = null;
-	let timer: ReturnType<typeof setInterval> | undefined;
+	let timers: ReturnType<typeof setInterval>[] = [];
+	let loadedAt: Date | null = null;
+	let pcBusy = false;
 
-	const load = async () => {
-		[overview, now, queues] = await Promise.all([
-			getJson('/api/overview'),
-			getJson('/api/now'),
-			getJson<any[]>('/api/queues')
-		]);
+	/** PC の状態は 5 秒ごと（前の取得が終わっていなければ飛ばす。タブが見えないときは取らない） */
+	const PC_EVERY_MS = 5_000;
+	const REST_EVERY_MS = 30_000;
+
+	const loadPc = async () => {
+		if (pcBusy || document.hidden) return;
+		pcBusy = true;
+		try {
+			overview = await getJson('/api/overview');
+			loadedAt = new Date();
+		} finally {
+			pcBusy = false;
+		}
+	};
+	const loadRest = async () => {
+		if (document.hidden) return;
+		[now, queues] = await Promise.all([getJson('/api/now'), getJson<any[]>('/api/queues')]);
 	};
 
 	onMount(() => {
-		load();
-		timer = setInterval(load, 30_000);
+		loadPc();
+		loadRest();
+		timers = [setInterval(loadPc, PC_EVERY_MS), setInterval(loadRest, REST_EVERY_MS)];
 	});
-	onDestroy(() => clearInterval(timer));
+	onDestroy(() => timers.forEach(clearInterval));
 
 	const pct = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 100) : 0);
 </script>
 
 <h2>PC の状態</h2>
+<p class="support">
+	5 秒ごとに更新（電力は 5 分ごとの写し）{#if loadedAt}。最終: {loadedAt.toLocaleTimeString(
+			'ja-JP'
+		)}{/if}
+</p>
 {#if overview === null}
 	<p role="status">読み込んでいます</p>
 {:else if !overview.ok}

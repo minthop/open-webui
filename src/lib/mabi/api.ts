@@ -3,9 +3,10 @@
 
 export const MABI_API = '/mabi-api';
 
-/** EPGStation の画面（同じホストの 8888 番。v2.10.0 の vue-router は hash の形） */
-export const epgUrl = (path: string): string =>
-	`${location.protocol}//${location.hostname}:8888/#${path}`;
+/** EPGStation の画面（同じホストの 8888 番。v2.10.0 の vue-router は hash の形）。
+ * 画面は HTTPS（Caddy の内部 CA。mabi の ADR 0071）だが 8888 番は HTTP のままなので、スキームは http に固定する
+ * （画面のスキームを引き継ぐと https://…:8888 になり ERR_SSL_PROTOCOL_ERROR。2026-11-15 の実機） */
+export const epgUrl = (path: string): string => `http://${location.hostname}:8888/#${path}`;
 
 export type Loaded<T> = { ok: true; data: T } | { ok: false; error: string };
 
