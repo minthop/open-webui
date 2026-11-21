@@ -1,5 +1,6 @@
 <script lang="ts">
-	// mabi: CPU と GPU の 1 週間（予定 = 録画の予約とタイマー、実績 = 過去 7 日に実際に動いたもの。ADR 0035）
+	// mabi: CPU と GPU の 1 週間（予定 = 録画の予約とタイマー、実績 = 過去 7 日に実際に動いたもの。ADR 0035）。
+	// CPU は物理コアごとの行（Mabi ADR 0090 の予約に合わせる。ADR 0094）
 	import { onMount } from 'svelte';
 	import {
 		getJson,
@@ -12,6 +13,7 @@
 		type Loaded
 	} from '$lib/mabi/api';
 	import { KIND_COLORS, KIND_LABELS } from './kinds';
+	import { lanes, coresLabel, type WeekItem } from '$lib/mabi/lanes';
 
 	const DAY = 86_400_000;
 	/** 終わりの分からない予定（タイマー）は 10 分の幅で描く */
@@ -23,23 +25,7 @@
 		week = await getJson('/api/week');
 	});
 
-	type Item = {
-		start_ms: number;
-		end_ms: number | null;
-		kind: string;
-		kind_label: string;
-		resource: string;
-		title: string;
-		source: string;
-		result: string | null;
-	};
-
-	const TRACKS: ['cpu' | 'gpu', string][] = [
-		['cpu', 'CPU'],
-		['gpu', 'GPU']
-	];
-
-	const onTrack = (it: Item, res: 'cpu' | 'gpu') => it.resource === res || it.resource === 'both';
+	type Item = WeekItem;
 
 	const days = (from: number, n: number) => Array.from({ length: n }, (_, i) => from + i * DAY);
 
@@ -61,9 +47,10 @@
 	};
 
 	const tip = (it: Item) =>
-		`${it.kind_label}: ${it.title} ${fmtHm(it.start_ms)}〜${it.end_ms ? fmtHm(it.end_ms) : ''}${
-			it.result ? `（${resultLabel(it.result)}）` : ''
-		}`;
+		`${it.kind_label}: ${it.title} ${fmtHm(it.start_ms)}〜${it.end_ms ? fmtHm(it.end_ms) : ''}（${coresLabel(
+			it,
+			resourceLabel
+		)}）${it.result ? `（${resultLabel(it.result)}）` : ''}`;
 </script>
 
 {#if week === null}
@@ -84,29 +71,39 @@
 		{/each}
 		<span>破線: 終わりの時刻が分からない予定（10 分の幅で表示）</span>
 	</div>
+	{#if w.cpu}
+		<p>
+			CPU は物理コアごとの行です。コア {w.cpu.reserved_core} は OS・録画・常駐に固定し、ほかのコアは作業ごとに予約します。予定はどのコアになるかが始まるときに決まるので、予約するコアを
+			1 行にまとめています。
+		</p>
+	{/if}
 
-	{#each [{ title: '予定（今日から 7 日。録画の予約とタイマー）', list: w.planned, from: today }, { title: '実績（過去 7 日に実際に動いたもの）', list: w.actual, from: today - 6 * DAY }] as sec}
+	{#each [{ title: '予定（今日から 7 日。録画の予約とタイマー）', list: w.planned, from: today, rows: lanes(w.cpu, true) }, { title: '実績（過去 7 日に実際に動いたもの）', list: w.actual, from: today - 6 * DAY, rows: lanes(w.cpu, false) }] as sec}
 		<h2>{sec.title}</h2>
 		{#each days(sec.from, 7) as day}
 			{@const items = inDay(sec.list, day, now)}
 			<h3>{fmtDay(day)}</h3>
-			{#each TRACKS as [res, label]}
-				<div class="mabi-day">
-					<span>{label}</span>
-					<div
-						class="mabi-track"
-						role="img"
-						aria-label="{fmtDay(day)} の {label}: {items.filter((it) => onTrack(it, res))
-							.length} 件"
-					>
-						{#each [3, 6, 9, 12, 15, 18, 21] as h}
-							<span class="hour" style="left:{(h / 24) * 100}%"></span>
-						{/each}
-						{#each items.filter((it) => onTrack(it, res)) as it}
-							<span class="block" style={blockStyle(it, day, now)} title={tip(it)}></span>
-						{/each}
+			{#each sec.rows as lane (lane.key)}
+				{@const on = items.filter(lane.match)}
+				{#if !lane.optional || on.length}
+					<div class="mabi-day">
+						<span title={lane.note}>{lane.label}</span>
+						<div
+							class="mabi-track"
+							role="img"
+							aria-label="{fmtDay(day)} の {lane.label}{lane.note
+								? `（${lane.note}）`
+								: ''}: {on.length} 件"
+						>
+							{#each [3, 6, 9, 12, 15, 18, 21] as h}
+								<span class="hour" style="left:{(h / 24) * 100}%"></span>
+							{/each}
+							{#each on as it}
+								<span class="block" style={blockStyle(it, day, now)} title={tip(it)}></span>
+							{/each}
+						</div>
 					</div>
-				</div>
+				{/if}
 			{/each}
 			{#if items.length}
 				<details>
@@ -121,7 +118,7 @@
 									<tr>
 										<td>{fmtHm(it.start_ms)}〜{it.end_ms ? fmtHm(it.end_ms) : ''}</td>
 										<td>{it.kind_label}</td>
-										<td>{resourceLabel(it.resource)}</td>
+										<td>{coresLabel(it, resourceLabel)}</td>
 										<td>{it.title}</td>
 										<td>
 											{#if it.result}
