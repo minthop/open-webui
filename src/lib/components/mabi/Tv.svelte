@@ -18,6 +18,15 @@
 	});
 
 	const nowMs = Date.now();
+
+	const genreLabel = (g?: number): string =>
+		({ 3: 'ドラマ', 6: '映画', 7: 'アニメ・特撮', 8: 'ドキュメンタリー・教養' })[g ?? 0] ?? '';
+
+	/** シーズンの評価: 評価済みなら保存価値と段階、まだなら前評判 */
+	const scoreText = (s: any): string =>
+		s.locked
+			? `評価済み 保存価値 ${s.value ?? '-'}・段階 ${s.tier ?? '-'}`
+			: `前評判 ${s.pre ?? '-'}`;
 </script>
 
 <p>
@@ -34,6 +43,45 @@
 	<p role="status">読み込んでいます</p>
 {:else if !recommend.ok}
 	<p class="support">おすすめはまだありません（AI の調査が動くと表示されます）</p>
+{:else if recommend.data.groups}
+	<!-- シリーズごとにまとめ、その中をシーズンごとに（Mabi ADR 0099） -->
+	<div class="mabi-table-scroll">
+		<table class="mabi-table">
+			<thead><tr><th>シリーズ</th><th>シーズンと評価</th><th>次の放送</th></tr></thead>
+			<tbody>
+				{#each recommend.data.groups as g}
+					<tr>
+						<td>
+							<strong>{g.series}</strong><br /><span class="support">{genreLabel(g.genre)}</span>
+						</td>
+						<td>
+							{#each g.seasons as s}
+								<div>
+									{s.season ? `シーズン ${s.season}` : '—'}: {scoreText(s)}
+									{#if s.period}<span class="mabi-chip muted">時代劇・海外</span>{/if}
+								</div>
+								{#if s.reason}<div class="support">{s.reason}</div>{/if}
+								<details>
+									<summary>{s.episodes.length} 件（これから {s.upcoming} 件）</summary>
+									<ul>
+										{#each s.episodes as r}
+											<li>
+												{fmtDateTime(r.start_ms)}
+												{r.channel ?? ''}: {r.name}（{r.status_label ?? ''}）
+											</li>
+										{/each}
+									</ul>
+								</details>
+							{/each}
+						</td>
+						<td>{g.next_ms ? fmtDateTime(g.next_ms) : '—'}</td>
+					</tr>
+				{:else}
+					<tr><td colspan="3">ありません</td></tr>
+				{/each}
+			</tbody>
+		</table>
+	</div>
 {:else}
 	<div class="mabi-table-scroll">
 		<table class="mabi-table">
