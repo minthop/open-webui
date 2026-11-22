@@ -8,6 +8,8 @@
 	let queues: Loaded<any[]> | null = null;
 	let timers: ReturnType<typeof setInterval>[] = [];
 	let loadedAt: Date | null = null;
+	// キューと今の仕事を最後に読み込んだ時刻（テンプレートの Date.now() は再描画されず、画面を開いた時刻のまま残っていた。2026-11-22）
+	let restAt: Date | null = null;
 	let pcBusy = false;
 
 	/** PC の状態は 5 秒ごと（前の取得が終わっていなければ飛ばす。タブが見えないときは取らない） */
@@ -27,6 +29,7 @@
 	const loadRest = async () => {
 		if (document.hidden) return;
 		[now, queues] = await Promise.all([getJson('/api/now'), getJson<any[]>('/api/queues')]);
+		restAt = new Date();
 	};
 
 	onMount(() => {
@@ -191,5 +194,10 @@
 			</tbody>
 		</table>
 	</div>
-	<p class="support">30 秒ごとに更新します。最終更新 {fmtDateTime(Date.now())}</p>
+	<p class="support">
+		30 秒ごとに更新します。最終更新 {restAt === null ? '—' : fmtDateTime(restAt.getTime())}
+		{#if (now && !now.ok) || (queues && !queues.ok)}<span class="mabi-chip ng"
+				>＊一部を読み込めませんでした</span
+			>{/if}
+	</p>
 {/if}

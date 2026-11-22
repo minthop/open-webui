@@ -1,7 +1,7 @@
 <script lang="ts">
 	// mabi: 録画と派生物（変換・CM 抜き・文字起こし・要約・場面・索引。ADR 0035）
 	import { onMount } from 'svelte';
-	import { getJson, epgUrl, fmtDateTime, type Loaded } from '$lib/mabi/api';
+	import { getJson, epgUrl, fmtDateTime, MABI_API, type Loaded } from '$lib/mabi/api';
 	import Dedupe from './Dedupe.svelte';
 
 	let recorded: Loaded<any[]> | null = null;
@@ -43,34 +43,51 @@
 	{@const list = recorded.data.filter((m) => !query || (m.name ?? '').includes(query))}
 	<p role="status">全{list.length}件</p>
 	{#each list.slice(0, 50) as m}
-		<section class="mabi-card" style="margin-bottom: 16px">
-			<h3 style="margin-top: 0">
-				{#if m.recorded_id}
-					<a href={epgUrl(`/recorded/detail/${m.recorded_id}`)} target="_blank" rel="noopener"
-						>{m.name}</a
-					>
-				{:else}{m.name}{/if}
-			</h3>
-			<p class="support">
-				{fmtDateTime(m.start_at)}・{m.channel ?? ''}{m.duration_s
-					? `・${Math.round(m.duration_s / 60)}分`
-					: ''}
-				{#if m.drop_cnt > 0}<span class="mabi-chip warn">＊ドロップ {m.drop_cnt}</span>{/if}
-				{#if m.duplicate_of?.length}<span class="mabi-chip muted">重複の候補あり</span>{/if}
-			</p>
-			<p>
-				{#each DERIVED as [k, label]}
-					<span class="mabi-chip {m.derived?.[k] ? 'ok' : 'muted'}" style="margin: 0 8px 4px 0"
-						>{m.derived?.[k] ? 'あり' : 'なし'}: {label}</span
-					>
-				{/each}
-			</p>
-			{#if m.summary_head}
-				<details>
-					<summary>要約（冒頭 400 字）</summary>
-					<p class="mabi-pre">{m.summary_head}</p>
-				</details>
+		<section
+			class="mabi-card"
+			style="margin-bottom: 16px; display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start"
+		>
+			{#if m.recorded_id}
+				<!-- EPGStation のサムネイル（mabi-web の中継。Mabi ADR 0106）。取れなければ隠す -->
+				<img
+					src={`${MABI_API}/api/recorded/${m.recorded_id}/thumbnail`}
+					alt={`${m.name ?? ''} のサムネイル`}
+					width="240"
+					height="135"
+					loading="lazy"
+					style="object-fit: cover; border-radius: 8px; background: var(--color-gray-100, #f2f2f2)"
+					on:error={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')}
+				/>
 			{/if}
+			<div style="flex: 1; min-width: 280px">
+				<h3 style="margin-top: 0">
+					{#if m.recorded_id}
+						<a href={epgUrl(`/recorded/detail/${m.recorded_id}`)} target="_blank" rel="noopener"
+							>{m.name}</a
+						>
+					{:else}{m.name}{/if}
+				</h3>
+				<p class="support">
+					{fmtDateTime(m.start_at)}・{m.channel ?? ''}{m.duration_s
+						? `・${Math.round(m.duration_s / 60)}分`
+						: ''}
+					{#if m.drop_cnt > 0}<span class="mabi-chip warn">＊ドロップ {m.drop_cnt}</span>{/if}
+					{#if m.duplicate_of?.length}<span class="mabi-chip muted">重複の候補あり</span>{/if}
+				</p>
+				<p>
+					{#each DERIVED as [k, label]}
+						<span class="mabi-chip {m.derived?.[k] ? 'ok' : 'muted'}" style="margin: 0 8px 4px 0"
+							>{m.derived?.[k] ? 'あり' : 'なし'}: {label}</span
+						>
+					{/each}
+				</p>
+				{#if m.summary_head}
+					<details>
+						<summary>要約（冒頭 400 字）</summary>
+						<p class="mabi-pre">{m.summary_head}</p>
+					</details>
+				{/if}
+			</div>
 		</section>
 	{:else}
 		<p>まだありません</p>
