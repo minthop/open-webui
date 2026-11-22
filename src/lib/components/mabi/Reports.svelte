@@ -48,10 +48,12 @@
 	<h2>通知</h2>
 	<div class="mabi-table-scroll">
 		<table class="mabi-table">
-			<thead><tr><th>重さ</th><th>種類</th><th>内容</th></tr></thead>
+			<thead><tr><th>日時</th><th>重さ</th><th>種類</th><th>内容</th></tr></thead>
 			<tbody>
 				{#each activity.data.notifications as n}
 					<tr>
+						<!-- 日時（日本時間。年と秒は出さない。2026-11-22 の人間の指示） -->
+						<td style="white-space: nowrap">{n.at ? fmtDateTime(n.at * 1000) : '—'}</td>
 						<td>
 							<span
 								class="mabi-chip {n.level === 'critical'
@@ -66,11 +68,11 @@
 										: 'お知らせ'}</span
 							>
 						</td>
-						<td>{n.kind ?? ''}</td>
+						<td style="white-space: nowrap">{n.kind ?? ''}</td>
 						<td>{n.message ?? ''}</td>
 					</tr>
 				{:else}
-					<tr><td colspan="3">ありません</td></tr>
+					<tr><td colspan="4">ありません</td></tr>
 				{/each}
 			</tbody>
 		</table>
