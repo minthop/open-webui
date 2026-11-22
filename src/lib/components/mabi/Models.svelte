@@ -26,10 +26,11 @@
 		['M4', 'マルチモーダル（録画の場面の説明）'],
 		['M5', 'レスキュー（難しい問題の立て直し）'],
 		['M6', 'ロジックチェック・数理'],
-		['M7', '長文ログ（256K）'],
+		['M7', '長文ログ（224K）'],
 		['M8', 'ツール・MCP'],
 		['M9', '文字起こし（whisper.cpp）'],
-		['M10', '録画の検索の埋め込み（VideoRAG）']
+		['M10', '録画の検索の埋め込み（VideoRAG。TEI・CPU）'],
+		['M11', '録画の検索の再順位付け（TEI・GPU に常駐）']
 	];
 </script>
 
@@ -51,7 +52,7 @@
 			: 'まだ'}）
 	</p>
 	<details class="mabi-roles" open>
-		<summary>役割（M0〜M10）の凡例</summary>
+		<summary>役割（M0〜M11）の凡例</summary>
 		<dl>
 			{#each ROLES as [k, v]}
 				<div>
