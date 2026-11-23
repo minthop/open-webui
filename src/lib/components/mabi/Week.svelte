@@ -49,7 +49,8 @@
 	const tip = (it: Item) =>
 		`${it.kind_label}: ${it.title} ${fmtHm(it.start_ms)}〜${it.end_ms ? fmtHm(it.end_ms) : ''}（${coresLabel(
 			it,
-			resourceLabel
+			resourceLabel,
+			week && week.ok ? week.data?.cpu : null
 		)}）${it.result ? `（${resultLabel(it.result)}）` : ''}`;
 </script>
 
@@ -71,7 +72,13 @@
 		{/each}
 		<span>破線: 終わりの時刻が分からない予定（10 分の幅で表示）</span>
 	</div>
-	{#if w.cpu}
+	{#if w.cpu?.mode === 'priority'}
+		<p>
+			CPU
+			は優先度の段ごとの行です。コアは固定せず全コアを共有し、取り合いになったときだけ段の重みで分けます（上の段ほど優先）。GPU
+			は作業ごとに要る VRAM を予約し、合計が予算に収まる間は同時に動きます。
+		</p>
+	{:else if w.cpu}
 		<p>
 			CPU は物理コアごとの行です。コア {w.cpu.reserved_core} は OS・録画・常駐に固定し、ほかのコアは作業ごとに予約します。予定はどのコアになるかが始まるときに決まるので、予約するコアを
 			1 行にまとめています。
@@ -118,7 +125,7 @@
 									<tr>
 										<td>{fmtHm(it.start_ms)}〜{it.end_ms ? fmtHm(it.end_ms) : ''}</td>
 										<td>{it.kind_label}</td>
-										<td>{coresLabel(it, resourceLabel)}</td>
+										<td>{coresLabel(it, resourceLabel, w.cpu)}</td>
 										<td>{it.title}</td>
 										<td>
 											{#if it.result}

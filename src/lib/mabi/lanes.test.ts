@@ -60,7 +60,66 @@ describe('lanes', () => {
 	});
 });
 
+// Mabi ADR 0118 の /api/week の cpu（優先度の段。mabi-web の試験と同じ形）
+const prio: CpuView = {
+	mode: 'priority',
+	tiers: [
+		{ key: 'rec', label: '録画・OS', weight: 1000 },
+		{ key: 'interactive', label: '対話（Open WebUI・router・Claude Code）', weight: 500 },
+		{ key: 'media', label: '録画の後処理', weight: 200 },
+		{ key: 'ai', label: '画像生成・おすすめ録画・要約', weight: 100 },
+		{ key: 'bench', label: 'ベンチ・コード実行', weight: 50 },
+		{ key: 'low', label: '更新・重複整理・AIDE・CI', weight: 20 }
+	],
+	gpu_budget_gb: 10.85
+};
+
+describe('lanes (priority)', () => {
+	it('one row per tier from high to low, the no-record row, then GPU with the budget', () => {
+		for (const planned of [true, false]) {
+			const ls = lanes(prio, planned);
+			expect(ls.map((l) => l.key)).toEqual([
+				'tier-rec',
+				'tier-interactive',
+				'tier-media',
+				'tier-ai',
+				'tier-bench',
+				'tier-low',
+				'none',
+				'gpu'
+			]);
+			expect(ls.filter((l) => !l.optional).map((l) => l.key)).toEqual([
+				'tier-rec',
+				'tier-interactive',
+				'gpu'
+			]);
+			expect(ls.at(-1)?.note).toContain('10.85GB');
+		}
+		const ls = lanes(prio, false);
+		expect(on(ls, item({ tier: 'media', gpu: true, vram_gb: 5.1 }))).toEqual(['tier-media', 'gpu']);
+		expect(on(ls, item({ tier: 'rec', source: 'epg' }))).toEqual(['tier-rec']);
+		// 段の記録が無い（方式を変える前の実績）
+		expect(on(ls, item({ cores: [1] }))).toEqual(['none']);
+	});
+
+	it('uses the core rows when mode is not priority', () => {
+		expect(lanes({ ...cpu, mode: '' }, false)[0].key).toBe('core0');
+	});
+});
+
 describe('coresLabel', () => {
+	it('names the tier and the VRAM, or that the GPU is used alone', () => {
+		const fb = (r?: string) => `(${r})`;
+		expect(coresLabel(item({ tier: 'low' }), fb, prio)).toBe('更新・重複整理・AIDE・CI');
+		expect(coresLabel(item({ tier: 'media', gpu: true, vram_gb: 5.1 }), fb, prio)).toBe(
+			'録画の後処理、GPU 5.1GB'
+		);
+		expect(coresLabel(item({ tier: 'bench', gpu: true, vram_gb: null }), fb, prio)).toBe(
+			'ベンチ・コード実行、GPU（占有）'
+		);
+		expect(coresLabel(item({ tier: 'x' }), fb, null)).toBe('x');
+	});
+
 	const fb = (r?: string) => `(${r})`;
 	it('names the cores used, the number needed, or the resource', () => {
 		expect(coresLabel(item({ cores: [1, 2] }), fb)).toBe('コア 1・2');
