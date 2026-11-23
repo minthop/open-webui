@@ -45,6 +45,7 @@ from open_webui.utils.headers import get_headers_and_cookies, include_user_info_
 from open_webui.utils.json_codec import JSONCodec
 from open_webui.utils.misc import convert_logit_bias_input_to_json, get_provider_function, merge_tool_call_batches
 from open_webui.utils.model_ids import strip_provider_model_prefix
+from open_webui.utils import mabi_autoload
 from open_webui.utils.payload import (
     apply_model_params_to_body_openai,
     apply_system_prompt_to_body,
@@ -1474,6 +1475,9 @@ async def generate_chat_completion(
 
     prefix_id = api_config.get('prefix_id', None)
     payload['model'] = strip_provider_model_prefix(payload['model'], prefix_id)
+
+    # mabi: router は自動で読み込まないので、チャットの前にモデルを載せてもらう（Mabi ADR 0116）
+    await mabi_autoload.ensure_loaded(url, payload['model'])
 
     # Add user info to the payload if the model is a pipeline
     if 'pipeline' in model and model.get('pipeline'):
