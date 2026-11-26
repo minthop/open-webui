@@ -30,7 +30,8 @@
 		['M8', 'ツール・MCP'],
 		['M9', '文字起こし（whisper.cpp）'],
 		['M10', '録画の検索の埋め込み（VideoRAG。TEI・CPU）'],
-		['M11', '録画の検索の再順位付け（TEI・GPU に常駐）']
+		['M11', '録画の検索の再順位付け（TEI・GPU に常駐）'],
+		['M12', '画像生成（挿絵。stable-diffusion.cpp）']
 	];
 </script>
 
@@ -52,7 +53,7 @@
 			: 'まだ'}）
 	</p>
 	<details class="mabi-roles" open>
-		<summary>役割（M0〜M11）の凡例</summary>
+		<summary>役割（M0〜M12）の凡例</summary>
 		<dl>
 			{#each ROLES as [k, v]}
 				<div>
