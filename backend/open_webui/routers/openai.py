@@ -1476,6 +1476,11 @@ async def generate_chat_completion(
     prefix_id = api_config.get('prefix_id', None)
     payload['model'] = strip_provider_model_prefix(payload['model'], prefix_id)
 
+    # mabi: GPU を使う作業があれば、待ちの知らせと選択肢を返す（自動実行は黙って待つ。Mabi ADR 0124）
+    gated = await mabi_autoload.gate(request, url, payload, metadata)
+    if gated is not None:
+        return gated
+
     # mabi: router は自動で読み込まないので、チャットの前にモデルを載せてもらう（Mabi ADR 0116）
     await mabi_autoload.ensure_loaded(url, payload['model'])
 
