@@ -12,12 +12,14 @@
 	import Models from '$lib/components/mabi/Models.svelte';
 	import Reports from '$lib/components/mabi/Reports.svelte';
 	import Artifacts from '$lib/components/mabi/Artifacts.svelte';
+	import Workflow from '$lib/components/mabi/Workflow.svelte';
 	import '$lib/mabi/mabi.css';
 
 	const i18n = getContext<any>('i18n');
 
 	const TABS = [
 		{ id: 'overview', label: '状態とキュー', component: Overview },
+		{ id: 'workflow', label: 'ワークフロー', component: Workflow },
 		{ id: 'week', label: '1 週間の予定と実績', component: Week },
 		{ id: 'tv', label: '番組', component: Tv },
 		{ id: 'recorded', label: '録画と派生物', component: Recorded },
