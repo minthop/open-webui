@@ -450,6 +450,11 @@ async def lifespan(app: FastAPI):
 
     app.state.scheduler_worker_loop = asyncio.create_task(scheduler_worker_loop(app))
 
+    # mabi: 連載の台帳の話を、モデルを使わずに note へ写す（Mabi ADR 0125）
+    from open_webui.utils.mabi_story import story_copy_loop
+
+    app.state.mabi_story_copy_loop = asyncio.create_task(story_copy_loop())
+
     if await Config.get('models.base_models_cache'):
         try:
             await get_all_models(
@@ -542,6 +547,7 @@ async def lifespan(app: FastAPI):
     app.state.periodic_usage_pool_cleanup.cancel()
     app.state.periodic_session_pool_cleanup.cancel()
     app.state.scheduler_worker_loop.cancel()
+    app.state.mabi_story_copy_loop.cancel()
 
     await publish_event(request, EVENTS.SYSTEM_SHUTDOWN_COMPLETED, source='system')
 

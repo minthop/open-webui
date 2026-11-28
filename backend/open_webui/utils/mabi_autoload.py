@@ -110,6 +110,25 @@ async def _tools(method: str, path: str) -> dict | None:
         return None
 
 
+async def _tools_json(method: str, path: str, body: dict) -> dict | None:
+    conn = tools_connection()
+    if conn is None:
+        return None
+    base, key = conn
+    try:
+        timeout = aiohttp.ClientTimeout(total=20)
+        async with aiohttp.ClientSession(timeout=timeout, trust_env=False) as session:
+            async with session.request(
+                method, f'{base}{path}', json=body, headers={'Authorization': f'Bearer {key}'}
+            ) as r:
+                if r.status != 200:
+                    return None
+                return await r.json(content_type=None)
+    except Exception as e:
+        log.warning('mabi: mabi-tools %s に届かない（%s）', path, e)
+        return None
+
+
 async def _emitter(metadata):
     if not metadata or not metadata.get('chat_id'):
         return None
