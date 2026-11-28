@@ -279,10 +279,14 @@
 		folderRegistry[folder.id]?.setFolderItems?.();
 	};
 
-	// mabi: サーバーの画面は常に先頭に出す
+	// mabi: サーバーの画面は常に先頭に出す。オートメーションも常に出す（物語の自動実行を止める・確かめるため。
+	// 2026-11-28 の人間の依頼「左のメニューに追加してください」）
 	$: pinnedItems = [
 		'mabi',
-		...($settings?.pinnedMenuItems ?? DEFAULT_PINNED_ITEMS).filter((i) => i !== 'mabi')
+		...($settings?.pinnedMenuItems ?? DEFAULT_PINNED_ITEMS).filter(
+			(i) => i !== 'mabi' && i !== 'automations'
+		),
+		'automations'
 	];
 
 	$: isMenuItemVisible = (id) => {
