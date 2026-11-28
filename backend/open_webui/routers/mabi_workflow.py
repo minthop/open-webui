@@ -29,6 +29,12 @@ def summarize_series(st: dict) -> dict:
         'to_copy': (
             {k: tc.get(k) for k in ('n', 'title', 'created_at', 'illustration_status')} if tc else None
         ),
+        # 話の一覧（題・作成時刻・note の id・挿絵）。画面で話数から note へリンクする（Mabi ADR 0131）
+        'list': [
+            {k: e.get(k) for k in ('n', 'title', 'created_at', 'note_id', 'illustration_status')}
+            for e in eps
+            if isinstance(e, dict)
+        ],
         'open_items': st.get('open_items', 0),
         'today_episode': bool(st.get('today_episode')),
     }
